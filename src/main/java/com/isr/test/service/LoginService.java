@@ -38,9 +38,22 @@ public class LoginService {
                 .distinct().sort();
     }
 
+    /***
+     * This will get the users that has record of login between startDate and endDate.
+     * @param startDate
+     * @param endDate
+     * @return
+     */
     public Flux<String> getUsersByStartDateAndEndDate(LocalDate startDate, LocalDate endDate) {
 
-        return redisOperations.keys("*").flatMap(redisOperations.opsForValue()::get)
+        // implement a scan option to better handle the reading in the table
+        ScanOptions scanOptions = ScanOptions.scanOptions()
+                .match("*")
+                .count(1000) // Add count(1000) to limit the number of keys retrieved per scan iteration this will improve usage of memory and network sources
+                .build();
+
+        return redisOperations
+                .scan(scanOptions).flatMap(redisOperations.opsForValue()::get)
                 .filter(login -> isWithinRange(login.getLoginTime(), startDate, endDate))
                 .map(Login::getUser)
                 .distinct().sort();
