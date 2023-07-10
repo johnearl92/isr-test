@@ -6,6 +6,7 @@ import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
+import org.springframework.http.converter.json.GsonBuilderUtils;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
@@ -53,7 +54,8 @@ public class LoginService {
                 .build();
 
         return redisOperations
-                .scan(scanOptions).flatMap(redisOperations.opsForValue()::get)
+                .scan(scanOptions)
+                .flatMap(redisOperations.opsForValue()::get)
                 .filter(login -> isWithinRange(login.getLoginTime(), startDate, endDate))
                 .map(Login::getUser)
                 .distinct().sort();
