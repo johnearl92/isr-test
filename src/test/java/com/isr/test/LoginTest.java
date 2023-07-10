@@ -72,7 +72,6 @@ class LoginTest {
     }
 
 
-
     @Test
     void testGetLoginsWithEmptyParameters() {
 
@@ -96,7 +95,7 @@ class LoginTest {
                 .exchange()
                 .expectStatus().isOk();
 
-        Mono<Map<String,Integer>> emptyMono = loginService.getLoginsByParamters(null);
+        Mono<Map<String,Integer>> emptyMono = loginService.getLoginsByParameters(null);
         StepVerifier.create(emptyMono)
                 .expectNextMatches(Map::isEmpty)
                 .verifyComplete();
@@ -136,7 +135,7 @@ class LoginTest {
                 null,
                 null);
 
-        Mono<Map<String,Integer>> result = loginService.getLoginsByParamters(searchParameter);
+        Mono<Map<String,Integer>> result = loginService.getLoginsByParameters(searchParameter);
         StepVerifier.create(result)
                 .expectNext(expectedMap)
                 .verifyComplete();
@@ -176,7 +175,7 @@ class LoginTest {
                 null,
                 null);
 //
-        Mono<Map<String,Integer>> result = loginService.getLoginsByParamters(searchParameter);
+        Mono<Map<String,Integer>> result = loginService.getLoginsByParameters(searchParameter);
         StepVerifier.create(result)
                 .expectNext(expectedMap)
                 .verifyComplete();
@@ -187,7 +186,7 @@ class LoginTest {
         // given
         Login login1 = createLogin("1", "2023-07-01T10:00:00Z", "testuser1","att1","att1","att1","att1");
         Login login2 = createLogin("2", "2023-07-02T11:00:00Z", "testuser2","att1","att1",null,null);
-        Login login3 = createLogin("3", "2023-07-03T12:00:00Z", "testuser1","att2","att1","att1","att1");
+        Login login3 = createLogin("3", "2023-07-03T12:00:00Z", "testuser1","att1","att3","att1","att1");
         Flux<String> ids = Flux.just("1","2","3");
 
         Map<String, Integer> expectedMap = new HashMap<>();
@@ -215,7 +214,7 @@ class LoginTest {
                 null,
                 null);
 //
-        Mono<Map<String,Integer>> result = loginService.getLoginsByParamters(searchParameter);
+        Mono<Map<String,Integer>> result = loginService.getLoginsByParameters(searchParameter);
         StepVerifier.create(result)
                 .expectNext(expectedMap)
                 .verifyComplete();

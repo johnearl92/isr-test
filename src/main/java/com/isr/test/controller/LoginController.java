@@ -3,10 +3,7 @@ package com.isr.test.controller;
 import com.isr.test.model.Login;
 import com.isr.test.model.SearchParameter;
 import com.isr.test.service.LoginService;
-import lombok.Getter;
-import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -67,7 +64,7 @@ public class LoginController {
 				&& attribute2 == null
 				&& attribute3 == null
 				&& attribute4 == null) ? null:new SearchParameter(startDate,endDate,attribute1,attribute2,attribute3,attribute4);
-		return loginService.getLoginsByParamters(searchParameter);
+		return loginService.getLoginsByParameters(searchParameter);
 	}
 
 
