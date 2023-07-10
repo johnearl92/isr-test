@@ -33,11 +33,19 @@ public class LoginService {
     }
 
 
+    /***
+     * this is just to check the contents of the database
+     * @return
+     */
     public Flux<Login> findAll() {
         return redisOperations.keys("*")
                 .flatMap(redisOperations.opsForValue()::get);
     }
 
+    /***
+     * This will get the uniqueDates in the table
+     * @return
+     */
     public Flux<LocalDate> getUniqueDates() {
         return redisOperations.keys("*").flatMap(redisOperations.opsForValue()::get)
                 .map(login -> login.getLoginTime().atZone(ZoneId.systemDefault()).toLocalDate())
@@ -57,6 +65,12 @@ public class LoginService {
                 .distinct().sort();
     }
 
+    /***
+     * This will scan the table base on the paramters and return the record that satisfy the conditions base on the loginTime
+     * @param startDate
+     * @param endDate
+     * @return
+     */
     public Flux<Login> getLoginWithInRange(LocalDate startDate, LocalDate endDate) {
 
         // implement a scan option to better handle the reading in the table
