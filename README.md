@@ -4,7 +4,7 @@ This is a demo project for ISR for a simple project that returns a user in REST 
 ## Solution
 
 These are the following considerations I have come up with in scaling the database without sacrificing performance of the application:
-- For the database, I'll be using a NoSQL database since they are better in handling a big set of data and Redis a key-value pair database will have the fastest searching given the right key
+- For the database, I'll be using a NoSQL database since they are better in handling a big set of data and Redis a key-value pair database will have the fastest searching given the right key. as for the key , I am using user + loginTime under the assumption that the combination of the two will be unique.
 - I could also use SQL an implement indexing to better improve the handling of data
 - For the demo will be using an in-memory data
 - Sharding and partitioning can also help improve the performance of the database

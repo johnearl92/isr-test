@@ -2,6 +2,7 @@ package com.isr.test;
 
 import com.isr.test.controller.LoginController;
 import com.isr.test.model.Login;
+import com.isr.test.model.SearchParameter;
 import com.isr.test.service.LoginService;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -17,6 +18,9 @@ import reactor.core.publisher.Flux;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.mockito.Mock;
 import reactor.core.publisher.Mono;
@@ -70,14 +74,151 @@ class LoginTest {
 
 
     @Test
-    void testGetLogin() {
+    void testGetLoginsWithEmptyParameters() {
+
+        // given
+        Login login1 = createLogin("1", "2023-07-01T10:00:00Z", "testuser1");
+        Login login2 = createLogin("2", "2023-07-02T11:00:00Z", "testuser2");
+        Login login3 = createLogin("3", "2023-07-02T12:00:00Z", "testuser3");
+        Flux<String> ids = Flux.just("1","2","3");
 
         // when
+        when(redisOperations.keys(Mockito.any())).thenReturn(ids);
+        when(redisOperations.scan(Mockito.any())).thenReturn(ids);
+        when(redisOperations.opsForValue()).thenReturn(valueOperations);
+        when(redisOperations.opsForValue().get("1")).thenReturn(Mono.just(login1));
+        when(redisOperations.opsForValue().get("2")).thenReturn(Mono.just(login2));
+        when(redisOperations.opsForValue().get("3")).thenReturn(Mono.just(login3));
+
+        // then
         webTestClient.get()
                 .uri("/test/logins")
                 .exchange()
                 .expectStatus().isOk();
+
+        Mono<Map<String,Integer>> emptyMono = loginService.getLoginsByParamters(null);
+        StepVerifier.create(emptyMono)
+                .expectNextMatches(Map::isEmpty)
+                .verifyComplete();
+
+    }
+
+    @Test
+    void testGetLoginsBySearchParameter(){
+        // given
+        Login login1 = createLogin("1", "2023-07-01T10:00:00Z", "testuser1","att1","att1","att1","att1");
+        Login login2 = createLogin("2", "2023-07-02T11:00:00Z", "testuser2","att1",null,null,null);
+        Login login3 = createLogin("3", "2023-07-03T12:00:00Z", "testuser1","att2","att1","att1","att1");
+        Flux<String> ids = Flux.just("1","2","3");
+
+        Map<String, Integer> expectedMap = new HashMap<>();
+        expectedMap.put("testuser1", 1);
+        expectedMap.put("testuser2", 1);
+
+        // when
+        when(redisOperations.keys(Mockito.any())).thenReturn(ids);
+        when(redisOperations.scan(Mockito.any())).thenReturn(ids);
+        when(redisOperations.opsForValue()).thenReturn(valueOperations);
+        when(redisOperations.opsForValue().get("1")).thenReturn(Mono.just(login1));
+        when(redisOperations.opsForValue().get("2")).thenReturn(Mono.just(login2));
+        when(redisOperations.opsForValue().get("3")).thenReturn(Mono.just(login3));
+
         // then
+        webTestClient.get()
+                .uri("/test/logins?startDate=20230701&endDate=20230704&attribute1=att1")
+                .exchange()
+                .expectStatus().isOk();
+
+        SearchParameter searchParameter = new SearchParameter(LocalDate.parse("20230701",dateTimeFormatter),
+                LocalDate.parse("20230704",dateTimeFormatter),
+                List.of("att1"),
+                null,
+                null,
+                null);
+
+        Mono<Map<String,Integer>> result = loginService.getLoginsByParamters(searchParameter);
+        StepVerifier.create(result)
+                .expectNext(expectedMap)
+                .verifyComplete();
+
+    }
+
+    @Test
+    void testGetLoginsBySearchParameterWithMultipleAtt1() {
+        // given
+        Login login1 = createLogin("1", "2023-07-01T10:00:00Z", "testuser1","att1","att1","att1","att1");
+        Login login2 = createLogin("2", "2023-07-02T11:00:00Z", "testuser2","att1",null,null,null);
+        Login login3 = createLogin("3", "2023-07-03T12:00:00Z", "testuser1","att2","att1","att1","att1");
+        Flux<String> ids = Flux.just("1","2","3");
+
+        Map<String, Integer> expectedMap = new HashMap<>();
+        expectedMap.put("testuser1", 2);
+        expectedMap.put("testuser2", 1);
+
+        // when
+        when(redisOperations.keys(Mockito.any())).thenReturn(ids);
+        when(redisOperations.scan(Mockito.any())).thenReturn(ids);
+        when(redisOperations.opsForValue()).thenReturn(valueOperations);
+        when(redisOperations.opsForValue().get("1")).thenReturn(Mono.just(login1));
+        when(redisOperations.opsForValue().get("2")).thenReturn(Mono.just(login2));
+        when(redisOperations.opsForValue().get("3")).thenReturn(Mono.just(login3));
+
+        // then
+        webTestClient.get()
+                .uri("/test/logins?startDate=20230701&endDate=20230704&attribute1=att1&attribute1=att2")
+                .exchange()
+                .expectStatus().isOk();
+//
+        SearchParameter searchParameter = new SearchParameter(LocalDate.parse("20230701",dateTimeFormatter),
+                LocalDate.parse("20230704",dateTimeFormatter),
+                List.of("att1","att2"),
+                null,
+                null,
+                null);
+//
+        Mono<Map<String,Integer>> result = loginService.getLoginsByParamters(searchParameter);
+        StepVerifier.create(result)
+                .expectNext(expectedMap)
+                .verifyComplete();
+    }
+
+    @Test
+    void testGetLoginsBySearchParameterWithAtt1AndAtt2() {
+        // given
+        Login login1 = createLogin("1", "2023-07-01T10:00:00Z", "testuser1","att1","att1","att1","att1");
+        Login login2 = createLogin("2", "2023-07-02T11:00:00Z", "testuser2","att1","att1",null,null);
+        Login login3 = createLogin("3", "2023-07-03T12:00:00Z", "testuser1","att2","att1","att1","att1");
+        Flux<String> ids = Flux.just("1","2","3");
+
+        Map<String, Integer> expectedMap = new HashMap<>();
+        expectedMap.put("testuser1", 1);
+        expectedMap.put("testuser2", 1);
+
+        // when
+        when(redisOperations.keys(Mockito.any())).thenReturn(ids);
+        when(redisOperations.scan(Mockito.any())).thenReturn(ids);
+        when(redisOperations.opsForValue()).thenReturn(valueOperations);
+        when(redisOperations.opsForValue().get("1")).thenReturn(Mono.just(login1));
+        when(redisOperations.opsForValue().get("2")).thenReturn(Mono.just(login2));
+        when(redisOperations.opsForValue().get("3")).thenReturn(Mono.just(login3));
+
+        // then
+        webTestClient.get()
+                .uri("/test/logins?startDate=20230701&endDate=20230704&attribute1=att1&attribute1=att2")
+                .exchange()
+                .expectStatus().isOk();
+//
+        SearchParameter searchParameter = new SearchParameter(LocalDate.parse("20230701",dateTimeFormatter),
+                LocalDate.parse("20230704",dateTimeFormatter),
+                List.of("att1"),
+                List.of("att1"),
+                null,
+                null);
+//
+        Mono<Map<String,Integer>> result = loginService.getLoginsByParamters(searchParameter);
+        StepVerifier.create(result)
+                .expectNext(expectedMap)
+                .verifyComplete();
     }
 
     @Test
@@ -143,10 +284,10 @@ class LoginTest {
     }
 
     private Login createLogin(String id, String text, String testuser1) {
-        return creatLogin(id,text,testuser1,"","","","");
+        return createLogin(id,text,testuser1,"","","","");
     }
 
-    private Login creatLogin(String id, String text, String testuser1, String attribute1, String attribute2, String attribute3, String attribute4 ) {
+    private Login createLogin(String id, String text, String testuser1, String attribute1, String attribute2, String attribute3, String attribute4 ) {
         return new Login(id, Instant.parse(text), testuser1, attribute1, attribute2, attribute3, attribute4);
     }
 }

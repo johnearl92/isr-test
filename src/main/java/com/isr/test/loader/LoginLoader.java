@@ -44,14 +44,19 @@ public class LoginLoader {
 					Flux
 						.range(1, seedDataSize)
 						.map(i ->
-								new Login(UUID.randomUUID().toString(),
-								generateRandomTime(pastDate, currentDate),
-										"user" + i,
-										"attribute1" + i,
-										"attribute2" + i,
-										"attribute3" + i,
-										"attribute4" + i
-										)
+						{
+							Instant loginTime = generateRandomTime(pastDate, currentDate);
+							String user = "user" + i;
+							return new Login(user+loginTime,
+									loginTime,
+									user,
+									"attribute1" + i,
+									"attribute2" + i,
+									"attribute3" + i,
+									"attribute4" + i
+							);
+						}
+
 						)
 						.flatMap(login -> loginOps.opsForValue().set(login.getId(), login)))
 						.thenMany(loginOps.keys("*")
