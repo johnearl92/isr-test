@@ -3,6 +3,7 @@ package com.isr.test.loader;
 import com.isr.test.model.Login;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,9 @@ public class LoginLoader {
 	private final ReactiveRedisConnectionFactory factory;
 	private final ReactiveRedisOperations<String, Login> loginOps;
 
+	@Value("${test.seed.size}")
+	private int seedDataSize;
+
 
 	public LoginLoader(ReactiveRedisConnectionFactory factory, ReactiveRedisOperations<String, Login> loginOps) {
 		this.factory = factory;
@@ -38,7 +42,7 @@ public class LoginLoader {
 
 		factory.getReactiveConnection().serverCommands().flushAll().thenMany(
 					Flux
-						.range(1, 10)
+						.range(1, seedDataSize)
 						.map(i ->
 								new Login(UUID.randomUUID().toString(),
 								generateRandomTime(pastDate, currentDate),
